@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}Jobs | AI JobMatch{% endblock %}
+
+{% block content %}
+<section class="page-heading">
+    <p class="eyebrow">JOB OPPORTUNITIES</p>
+    <h1>Browse relevant opportunities.</h1>
+    <p>
+        Explore internships and jobs added to the AI JobMatch platform.
+    </p>
+</section>
+<section class="job-filters">
+    <div class="filter-group">
+        <label for="filter-location">Location</label>
+        <input id="filter-location" type="text" placeholder="e.g. Lahore">
+    </div>
+
+    <div class="filter-group">
+        <label for="filter-job-type">Job Type</label>
+        <select id="filter-job-type">
+            <option value="">All job types</option>
+            <option value="Internship">Internship</option>
+            <option value="Full-time">Full-time</option>
+            <option value="Part-time">Part-time</option>
+        </select>
+    </div>
+
+    <div class="filter-group">
+        <label for="filter-work-mode">Work Mode</label>
+        <select id="filter-work-mode">
+            <option value="">All work modes</option>
+            <option value="Remote">Remote</option>
+            <option value="Hybrid">Hybrid</option>
+            <option value="On-site">On-site</option>
+        </select>
+    </div>
+
+    <button id="filter-jobs" class="btn form-button" type="button">
+        Search Jobs
+    </button>
+</section>
+<section id="jobs-list" class="jobs-grid">
+    <p>Loading jobs...</p>
+</section>
+
+<script>
+    const jobsList = document.getElementById("jobs-list");
+    const locationInput = document.getElementById("filter-location");
+    const jobTypeSelect = document.getElementById("filter-job-type");
+    const workModeSelect = document.getElementById("filter-work-mode");
+    const filterButton = document.getElementById("filter-jobs");
+
+    async function loadJobs() {
+        jobsList.innerHTML = "<p>Loading jobs...</p>";
+
+        const queryParams = new URLSearchParams();
+
+        if (locationInput.value.trim()) {
+            queryParams.set("location", locationInput.value.trim());
+        }
+
+        if (jobTypeSelect.value) {
+            queryParams.set("job_type", jobTypeSelect.value);
+        }
+
+        if (workModeSelect.value) {
+            queryParams.set("work_mode", workModeSelect.value);
+        }
+
+        const queryString = queryParams.toString();
+        const apiUrl = queryString ? `/jobs/?${queryString}` : "/jobs/";
+
+        try {
+            const response = await fetch(apiUrl);
+            const jobs = await response.json();
+
+            if (!response.ok) {
+                throw new Error("Could not load jobs.");
+            }
+
+            if (jobs.length === 0) {
+                jobsList.innerHTML = "<p>No jobs found for these filters.</p>";
+                return;
+            }
+
+            jobsList.innerHTML = jobs.map(function (job) {
+                return `
+                    <article class="job-card">
+                        <div class="job-card-top">
+                            <div>
+                                <h2>${job.title}</h2>
+                                <p class="company-name">${job.company}</p>
+                            </div>
+                            <span class="work-mode">${job.work_mode}</span>
+                        </div>
+
+                        <p class="job-meta">
+                            ${job.location || "Location not specified"} · ${job.job_type}
+                        </p>
+
+                        <p class="job-description">
+                            ${job.description || "No description available."}
+                        </p>
+
+                        <p class="skills-text">
+                            <strong>Required skills:</strong>
+                            ${job.required_skills || "Not specified"}
+                        </p>
+
+                        <a class="btn btn-primary" href="${job.apply_url || '#'}" target="_blank">
+                            Apply Now
+                        </a>
+                    </article>
+                `;
+            }).join("");
+
+        } catch (error) {
+            jobsList.innerHTML = `<p class="error-message">${error.message}</p>`;
+        }
+    }
+
+    filterButton.addEventListener("click", loadJobs);
+
+    loadJobs();
+</script>
+{% endblock %}

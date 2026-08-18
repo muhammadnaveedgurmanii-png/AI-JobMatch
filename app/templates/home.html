@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}AI JobMatch | Find Your Best Job Match{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <div class="hero-content">
+        <p class="eyebrow">AI-POWERED JOB MATCHING</p>
+
+        <h1>Find jobs that fit your skills.</h1>
+
+        <p class="hero-text">
+            Build your resume profile, discover relevant opportunities,
+            and see exactly why a job matches you.
+        </p>
+
+        <div class="hero-actions">
+            <a class="btn btn-primary" href="/resume">Build Resume Profile</a>
+            <a class="btn btn-secondary" href="/matches-page">View Matched Jobs</a>
+        </div>
+    </div>
+
+    <div class="hero-card">
+        <p class="match-label">Your potential match</p>
+        <h2>AI Engineer Intern</h2>
+        <p>Tech Solutions Pakistan · Lahore · Hybrid</p>
+
+        <div class="match-score">80% Match</div>
+
+        <p class="skill-title">Matching skills</p>
+        <div class="skill-list">
+            <span>Python</span>
+            <span>FastAPI</span>
+            <span>SQL</span>
+            <span>Machine Learning</span>
+        </div>
+    </div>
+</section>
+
+<section class="features">
+    <article class="feature-card">
+        <h3>Resume Profile</h3>
+        <p>Store your skills, education, experience, and career preferences.</p>
+    </article>
+
+    <article class="feature-card">
+        <h3>Smart Matching</h3>
+        <p>Compare your resume skills with every job's required skills.</p>
+    </article>
+
+    <article class="feature-card">
+        <h3>Relevant Opportunities</h3>
+        <p>Find jobs and internships based on your location and work mode.</p>
+    </article>
+</section>
+{% endblock %}

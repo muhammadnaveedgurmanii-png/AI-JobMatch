@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block title %}Resume Profile | AI JobMatch{% endblock %}
+
+{% block content %}
+<section class="page-heading">
+    <p class="eyebrow">RESUME PROFILE</p>
+    <h1>Tell us about your professional profile.</h1>
+    <p>
+        Add your details once. AI JobMatch will use them to find relevant jobs.
+    </p>
+</section>
+
+<section class="form-card">
+    <form id="resume-form">
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="full_name">Full Name</label>
+                <input id="full_name" type="text" placeholder="Your full name" required>
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input id="email" type="email" placeholder="you@example.com" required>
+            </div>
+
+            <div class="form-group">
+                <label for="location">Preferred Location</label>
+                <input id="location" type="text" placeholder="e.g. Lahore">
+            </div>
+
+            <div class="form-group">
+                <label for="education">Education</label>
+                <input id="education" type="text" placeholder="e.g. BS Computer Science">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="summary">Professional Summary</label>
+            <textarea
+                id="summary"
+                placeholder="Write a short summary about your goals and experience."
+            ></textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="skills">Skills</label>
+            <textarea
+                id="skills"
+                placeholder="e.g. Python, FastAPI, SQL, Machine Learning"
+            ></textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="experience">Experience</label>
+            <textarea
+                id="experience"
+                placeholder="Briefly describe projects, internships, or work experience."
+            ></textarea>
+        </div>
+<div class="form-group">
+    <label for="resume-file">Upload Resume PDF (Optional)</label>
+    <input
+        id="resume-file"
+        type="file"
+        accept=".pdf,application/pdf"
+    >
+</div>
+        <button class="btn btn-primary form-button" type="submit">
+            Save Resume Profile
+        </button>
+
+        <p id="form-message"></p>
+    </form>
+</section>
+<script>
+    const resumeForm = document.getElementById("resume-form");
+    const formMessage = document.getElementById("form-message");
+    const resumeFile = document.getElementById("resume-file");
+
+    resumeForm.addEventListener("submit", async function (event) {
+        event.preventDefault();
+
+        formMessage.textContent = "Saving your profile...";
+        formMessage.style.color = "#2563eb";
+
+        const userData = {
+            full_name: document.getElementById("full_name").value,
+            email: document.getElementById("email").value,
+            preferred_location: document.getElementById("location").value
+        };
+
+        try {
+            const userResponse = await fetch("/users/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(userData)
+            });
+
+            const createdUser = await userResponse.json();
+
+            if (!userResponse.ok) {
+                throw new Error(createdUser.detail || "Could not create user.");
+            }
+
+            const resumeData = {
+                user_id: createdUser.id,
+                professional_summary: document.getElementById("summary").value,
+                skills: document.getElementById("skills").value,
+                education: document.getElementById("education").value,
+                experience: document.getElementById("experience").value
+            };
+
+            const resumeResponse = await fetch("/resumes/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(resumeData)
+            });
+
+            const createdResume = await resumeResponse.json();
+
+            if (!resumeResponse.ok) {
+                throw new Error(createdResume.detail || "Could not save resume.");
+            }
+if (resumeFile && resumeFile.files.length > 0) {
+    const uploadData = new FormData();
+
+    uploadData.append("user_id", createdUser.id);
+    uploadData.append("file", resumeFile.files[0]);
+
+    const uploadResponse = await fetch("/resumes/upload", {
+        method: "POST",
+        body: uploadData
+    });
+
+    const uploadedResume = await uploadResponse.json();
+
+    if (!uploadResponse.ok) {
+        throw new Error(
+            uploadedResume.detail || "Could not upload PDF resume."
+        );
+    }
+}
+            formMessage.textContent = "Resume profile saved successfully!";
+            formMessage.style.color = "#16a34a";
+            resumeForm.reset();
+
+        } catch (error) {
+            formMessage.textContent = error.message;
+            formMessage.style.color = "#dc2626";
+        }
+    });
+</script>
+{% endblock %}
