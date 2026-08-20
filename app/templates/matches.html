@@ -1,128 +1,14 @@
 {% extends "base.html" %}
-
 {% block title %}Matched Jobs | AI JobMatch{% endblock %}
-
 {% block content %}
-<section class="page-heading">
-    <p class="eyebrow">PERSONALISED RESULTS</p>
-    <h1>Jobs matched to your skills.</h1>
-    <p>
-        Select a profile to see the jobs that match its skills and location.
-    </p>
-</section>
-
-<section class="match-controls">
-    <label for="profile-user">Choose Resume Profile</label>
-
-    <div class="match-control-row">
-        <select id="profile-user">
-            <option value="">Loading profiles...</option>
-        </select>
-
-        <button id="load-matches" class="btn form-button" type="button">
-            Show Matches
-        </button>
-    </div>
-</section>
-
-<section id="matches-list" class="jobs-grid">
-    <p>Select a profile to load matched jobs.</p>
-</section>
-
+<section class="page-heading"><p class="eyebrow">PERSONALISED RESULTS</p><h1>Jobs matched to your skills.</h1><p>Select a profile to see the jobs that match its skills and location.</p></section>
+<section class="match-controls"><label for="profile-user">Choose Resume Profile</label><div class="match-control-row"><select id="profile-user"><option value="">Loading profiles...</option></select><button id="load-matches" class="btn form-button" type="button">Show Matches</button></div></section>
+<section id="matches-list" class="jobs-grid" aria-live="polite"><p>Select a profile to load matched jobs.</p></section>
 <script>
-    const profileUser = document.getElementById("profile-user");
-    const loadMatchesButton = document.getElementById("load-matches");
-    const matchesList = document.getElementById("matches-list");
-
-    async function loadUsers() {
-        try {
-            const response = await fetch("/users/");
-            const users = await response.json();
-
-            if (!response.ok) {
-                throw new Error("Could not load profiles.");
-            }
-
-            if (users.length === 0) {
-                profileUser.innerHTML = "<option>No profiles available</option>";
-                return;
-            }
-
-            profileUser.innerHTML = users.map(function (user) {
-                return `
-                    <option value="${user.id}">
-                        ${user.full_name} — ${user.preferred_location || "No location"}
-                    </option>
-                `;
-            }).join("");
-
-        } catch (error) {
-            profileUser.innerHTML = "<option>Could not load profiles</option>";
-        }
-    }
-
-    async function loadMatches() {
-        const userId = profileUser.value;
-
-        if (!userId) {
-            return;
-        }
-
-        matchesList.innerHTML = "<p>Loading matched jobs...</p>";
-
-        try {
-            const response = await fetch(`/matches/user/${userId}`);
-            const matches = await response.json();
-
-            if (!response.ok) {
-                throw new Error(matches.detail || "Could not load matches.");
-            }
-
-            if (matches.length === 0) {
-                matchesList.innerHTML = "<p>No matching jobs found yet.</p>";
-                return;
-            }
-
-            matchesList.innerHTML = matches.map(function (match) {
-                return `
-                    <article class="job-card">
-                        <div class="job-card-top">
-                            <div>
-                                <h2>${match.title}</h2>
-                                <p class="company-name">${match.company}</p>
-                            </div>
-                            <span class="match-badge">${match.match_percentage}% Match</span>
-                        </div>
-
-                        <p class="job-meta">
-                            ${match.location || "Location not specified"} ·
-                            ${match.job_type} · ${match.work_mode}
-                        </p>
-
-                        <p class="skills-text">
-                            <strong>Matching skills:</strong>
-                            ${match.matching_skills.join(", ") || "None"}
-                        </p>
-
-                        <p class="missing-skills">
-                            <strong>Skills to improve:</strong>
-                            ${match.missing_skills.join(", ") || "None"}
-                        </p>
-
-                        <a class="btn btn-primary" href="${match.apply_url || '#'}" target="_blank">
-                            View Job
-                        </a>
-                    </article>
-                `;
-            }).join("");
-
-        } catch (error) {
-            matchesList.innerHTML = `<p class="error-message">${error.message}</p>`;
-        }
-    }
-
-    loadMatchesButton.addEventListener("click", loadMatches);
-
-    loadUsers();
+const profileUser=document.getElementById("profile-user"),loadMatchesButton=document.getElementById("load-matches"),matchesList=document.getElementById("matches-list");
+function esc(v){const d=document.createElement("div");d.textContent=v==null?"":String(v);return d.innerHTML;}
+async function loadUsers(){try{const r=await fetch("/users/"),users=await r.json();if(!r.ok)throw Error("Could not load profiles.");if(!users.length){profileUser.innerHTML="<option value=\"\">No profiles available</option>";return;}profileUser.innerHTML=users.map(u=>"<option value=\""+esc(u.id)+"\">"+esc(u.full_name)+" — "+esc(u.preferred_location||"No location")+"</option>").join("");}catch(e){profileUser.innerHTML="<option value=\"\">Could not load profiles</option>";}}
+async function loadMatches(){const id=profileUser.value;if(!id){matchesList.innerHTML="<p>Please choose a profile first.</p>";return;}loadMatchesButton.disabled=true;matchesList.innerHTML="<p>Loading matched jobs...</p>";try{const r=await fetch("/matches/user/"+encodeURIComponent(id)),data=await r.json();if(!r.ok)throw Error(data.detail||"Could not load matches.");if(!data.length){matchesList.innerHTML="<p>No matching jobs found yet.</p>";return;}matchesList.innerHTML=data.map(m=>"<article class=\"job-card\"><div class=\"job-card-top\"><div><h2>"+esc(m.title)+"</h2><p class=\"company-name\">"+esc(m.company)+"</p></div><span class=\"match-badge\">"+esc(m.match_percentage)+"% Match</span></div><p class=\"job-meta\">"+esc(m.location||"Location not specified")+" · "+esc(m.job_type)+" · "+esc(m.work_mode)+"</p><p class=\"skills-text\"><strong>Matching skills:</strong> "+esc((m.matching_skills||[]).join(", ")||"None")+"</p><p class=\"missing-skills\"><strong>Skills to improve:</strong> "+esc((m.missing_skills||[]).join(", ")||"None")+"</p>"+(m.apply_url?"<a class=\"btn btn-primary\" href=\""+esc(m.apply_url)+"\" target=\"_blank\" rel=\"noopener noreferrer\">View Job</a>":"")+"</article>").join("");}catch(e){matchesList.innerHTML="<p class=\"error-message\">"+esc(e.message)+"</p>";}finally{loadMatchesButton.disabled=false;}}
+loadMatchesButton.addEventListener("click",loadMatches);loadUsers();
 </script>
 {% endblock %}
