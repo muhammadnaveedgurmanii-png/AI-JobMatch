@@ -6,3 +6,5 @@ sqlalchemy
 pydantic
 email-validator
 pypdf
+httpx
+python-dotenv
