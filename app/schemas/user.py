@@ -1,15 +1,11 @@
-from pydantic import BaseModel, EmailStr
 from typing import Optional
-
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 class UserCreate(BaseModel):
-    full_name: str
+    full_name: str = Field(min_length=2, max_length=100)
     email: EmailStr
-    preferred_location: Optional[str] = None
-
+    preferred_location: Optional[str] = Field(default=None, max_length=100)
 
 class UserResponse(UserCreate):
     id: int
-
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
