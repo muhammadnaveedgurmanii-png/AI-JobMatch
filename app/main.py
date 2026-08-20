@@ -1,8 +1,11 @@
 from fastapi import FastAPI, Request
+from dotenv import load_dotenv
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from app.database.database import Base, engine
+
+load_dotenv()
 from app.models.job import Job
 from app.models.resume import ResumeProfile
 from app.routes.jobs import router as jobs_router
