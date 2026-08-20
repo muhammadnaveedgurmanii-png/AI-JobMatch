@@ -27,7 +27,7 @@ def _normalise_job(job: dict, index: int) -> dict:
 async def search_live_jobs(location: Optional[str] = None, job_type: Optional[str] = None, work_mode: Optional[str] = None, page: int = 1) -> list[dict]:
     api_key = os.getenv("RAPIDAPI_KEY")
     if not api_key: raise ValueError("RAPIDAPI_KEY is not configured. Add it to your deployment environment variables.")
-    params = {"query":_query_from_filters(location,job_type,work_mode),"page":max(page,1),"num_pages":1,"date_posted":"all"}
+    params = {"query":_query_from_filters(location,job_type,work_mode),"page":max(page,1),"num_pages":1,"date_posted":"all","country":"us","language":"en"}
     headers = {"x-rapidapi-host":"jsearch.p.rapidapi.com","x-rapidapi-key":api_key}
     try:
         async with httpx.AsyncClient(timeout=20) as client: response = await client.get(JSEARCH_URL,params=params,headers=headers)
