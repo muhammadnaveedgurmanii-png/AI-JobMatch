@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap');
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @plugin "@tailwindcss/typography";
@@ -50,72 +51,71 @@
 }
 
 :root {
-  --app-font-sans: 'Inter', sans-serif;
-  --app-font-serif: 'Georgia', serif;
-  --app-font-mono: 'Menlo', monospace;
+  --app-font-sans: 'Outfit', sans-serif;
+  --app-font-mono: 'Space Mono', monospace;
   --radius: 0.75rem;
 
-  --background: 210 20% 98%; /* Light gray background */
-  --foreground: 220 20% 10%; /* Dark slate text */
-  --border: 220 13% 85%;
+  --background: 220 20% 98%; 
+  --foreground: 226 50% 12%; 
+  --border: 226 20% 90%;
   
   --card: 0 0% 100%;
-  --card-foreground: 220 20% 10%;
-  --card-border: 220 13% 91%;
+  --card-foreground: 226 50% 12%;
+  --card-border: 226 20% 92%;
 
   --popover: 0 0% 100%;
-  --popover-foreground: 220 20% 10%;
-  --popover-border: 220 13% 91%;
+  --popover-foreground: 226 50% 12%;
+  --popover-border: 226 20% 92%;
 
   --primary: 226 65% 35%; /* Sapphire Blue */
   --primary-foreground: 0 0% 100%;
 
-  --secondary: 15 90% 55%; /* Coral/Orange */
+  --secondary: 172 70% 30%; /* Emerald/Teal */
   --secondary-foreground: 0 0% 100%;
 
-  --muted: 220 14% 94%;
-  --muted-foreground: 220 10% 40%;
+  --muted: 226 20% 96%;
+  --muted-foreground: 226 15% 45%;
 
-  --accent: 226 30% 92%;
+  --accent: 226 80% 96%;
   --accent-foreground: 226 65% 35%;
 
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 100%;
 
-  --input: 220 13% 91%;
+  --input: 226 20% 90%;
   --ring: 226 65% 35%;
 }
 
 .dark {
-  --background: 220 30% 8%;
-  --foreground: 210 20% 98%;
-  --border: 220 20% 20%;
+  --background: 226 50% 10%;
+  --foreground: 220 20% 98%;
+  --border: 226 20% 20%;
   
-  --card: 220 30% 12%;
-  --card-foreground: 210 20% 98%;
-  --card-border: 220 20% 20%;
+  --card: 226 40% 14%;
+  --card-foreground: 220 20% 98%;
+  --card-border: 226 20% 20%;
 
-  --popover: 220 30% 12%;
-  --popover-foreground: 210 20% 98%;
-  --popover-border: 220 20% 20%;
+  --popover: 226 40% 14%;
+  --popover-foreground: 220 20% 98%;
+  --popover-border: 226 20% 20%;
 
-  --primary: 226 70% 60%;
+  --primary: 226 70% 65%;
   --primary-foreground: 0 0% 100%;
 
-  --secondary: 15 90% 55%;
+  --secondary: 172 70% 45%;
   --secondary-foreground: 0 0% 100%;
 
-  --muted: 220 20% 20%;
-  --muted-foreground: 220 15% 70%;
+  --muted: 226 30% 18%;
+  --muted-foreground: 226 15% 70%;
 
-  --accent: 226 40% 20%;
-  --accent-foreground: 226 70% 60%;
+  --accent: 226 40% 24%;
+  --accent-foreground: 226 70% 65%;
 
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 100%;
 
-  --input: 220 20% 20%;
-  --ring: 226 70% 60%;
+  --input: 226 30% 20%;
+  --ring: 226 70% 65%;
 }
 
 @layer base {
@@ -126,4 +126,29 @@
   body {
     @apply font-sans antialiased bg-background text-foreground;
   }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent; 
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-muted-foreground/30 rounded-full;
+}
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-muted-foreground/50;
+}
+
+.data-value {
+  font-family: var(--app-font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.glass-panel {
+  @apply bg-background/80 backdrop-blur-xl border-border/50;
 }

@@ -29,6 +29,20 @@ describe("normalizeSkillsToSet", () => {
     expect(result.has("react")).toBe(true);
   });
 
+  it("normalizes common aliases into a single skill taxonomy", () => {
+    const result = normalizeSkillsToSet([
+      "ReactJS",
+      "Node",
+      "JS",
+      "Postgres",
+      "ML",
+    ]);
+
+    expect(result).toEqual(
+      new Set(["react", "node.js", "javascript", "postgresql", "machine learning"]),
+    );
+  });
+
   it("filters empty strings", () => {
     const result = normalizeSkillsToSet(["React", "", "  ", "Node.js"]);
     expect(result.size).toBe(2);
@@ -65,6 +79,16 @@ describe("calculateMatch", () => {
     expect(result.matchPercentage).toBe(100);
   });
 
+  it("matches common skill aliases while preserving the job's wording", () => {
+    const result = calculateMatch(
+      ["ReactJS", "Node", "TS"],
+      ["React", "Node.js", "TypeScript"],
+    );
+
+    expect(result.matchPercentage).toBe(100);
+    expect(result.matchedSkills).toEqual(["Node.js", "React", "TypeScript"]);
+  });
+
   it("correctly computes partial match and rounds", () => {
     // 1 of 3 skills matched = 33.33% → rounds to 33
     const result = calculateMatch(["React"], ["React", "Node.js", "Python"]);
@@ -89,6 +113,14 @@ describe("calculateMatch", () => {
     const result = calculateMatch(["React"], ["React", "React", "Node.js"]);
     // unique job skills: React, Node.js (size 2), matched: 1
     expect(result.matchPercentage).toBe(50);
+  });
+
+  it("deduplicates equivalent job skill aliases before scoring", () => {
+    const result = calculateMatch(["JavaScript"], ["JavaScript", "JS", "Python"]);
+
+    expect(result.matchPercentage).toBe(50);
+    expect(result.matchedSkills).toEqual(["JavaScript"]);
+    expect(result.missingSkills).toEqual(["Python"]);
   });
 
   it("returns sorted matched and missing skills", () => {
