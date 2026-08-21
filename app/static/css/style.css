@@ -494,3 +494,16 @@ body {
         grid-template-columns: 1fr;
     }
 }
+
+/* Production interaction and responsive polish */
+button:disabled { opacity: .65; cursor: wait; }
+.btn:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 3px solid #93c5fd; outline-offset: 2px; }
+.success-message { color: #166534; font-weight: 700; }
+@media (max-width: 700px) {
+    .navbar { flex-wrap: wrap; gap: 14px; }
+    .nav-links { width: 100%; justify-content: center; flex-wrap: wrap; gap: 12px; }
+    .job-card { padding: 20px; }
+    .job-card-top { flex-direction: column; }
+    .work-mode, .match-badge { align-self: flex-start; }
+    .form-button { width: 100%; }
+}
