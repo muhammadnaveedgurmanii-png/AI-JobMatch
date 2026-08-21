@@ -1,0 +1,16 @@
+{
+  "extends": "../artifacts/api-server/tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "..",
+    "outDir": "../.vercel-build",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "typeRoots": ["../artifacts/api-server/node_modules/@types"]
+  },
+  "include": [
+    "./*.ts",
+    "../artifacts/api-server/src/**/*.ts"
+  ]
+}
