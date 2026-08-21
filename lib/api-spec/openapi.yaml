@@ -1,0 +1,521 @@
+openapi: 3.1.0
+info:
+  title: Api
+  version: 1.0.0
+  description: Authenticated AI JobMatch API for Pakistan-based job seekers
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+  - name: profile
+  - name: resumes
+  - name: jobs
+  - name: matches
+  - name: dashboard
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+  /profile:
+    get:
+      operationId: getProfile
+      tags: [profile]
+      summary: Get the authenticated candidate profile
+      responses:
+        "200":
+          description: Candidate profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CandidateProfile"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    put:
+      operationId: updateProfile
+      tags: [profile]
+      summary: Create or update the authenticated candidate profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CandidateProfileInput"
+      responses:
+        "200":
+          description: Updated candidate profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CandidateProfile"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /resume:
+    get:
+      operationId: getResume
+      tags: [resumes]
+      summary: Get the authenticated candidate resume profile
+      responses:
+        "200":
+          description: Resume profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResumeProfile"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    put:
+      operationId: updateResume
+      tags: [resumes]
+      summary: Create or update resume profile details
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResumeProfileInput"
+      responses:
+        "200":
+          description: Updated resume profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResumeProfile"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /resume/upload/request-url:
+    post:
+      operationId: requestResumeUploadUrl
+      tags: [resumes]
+      summary: Request a private upload URL for a PDF resume
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResumeUploadRequest"
+      responses:
+        "200":
+          description: Signed upload URL
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResumeUploadTarget"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "413":
+          description: File exceeds the 5 MB limit
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /resume/upload/complete:
+    post:
+      operationId: completeResumeUpload
+      tags: [resumes]
+      summary: Validate, extract and attach an uploaded PDF resume
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResumeUploadCompleteInput"
+      responses:
+        "200":
+          description: Parsed resume details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResumeUploadResult"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /jobs:
+    get:
+      operationId: listJobs
+      tags: [jobs]
+      summary: List locally curated jobs
+      parameters:
+        - $ref: "#/components/parameters/Location"
+        - $ref: "#/components/parameters/JobType"
+        - $ref: "#/components/parameters/WorkMode"
+      responses:
+        "200":
+          description: Filtered jobs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Job"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /jobs/search-live:
+    get:
+      operationId: searchLiveJobs
+      tags: [jobs]
+      summary: Search live jobs through JSearch
+      parameters:
+        - name: query
+          in: query
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 100
+            default: latest jobs
+        - $ref: "#/components/parameters/Location"
+        - name: country
+          in: query
+          description: ISO 3166-1 alpha-2 country code
+          schema:
+            type: string
+            pattern: "^[A-Za-z]{2}$"
+            default: PK
+        - $ref: "#/components/parameters/JobType"
+        - $ref: "#/components/parameters/WorkMode"
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 10
+            default: 1
+      responses:
+        "200":
+          description: Normalized live jobs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LiveJobSearchResult"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "502":
+          description: JSearch upstream failure
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "503":
+          description: Live search is not configured
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /matches:
+    get:
+      operationId: listMatches
+      tags: [matches]
+      summary: Rank local jobs against the authenticated resume
+      responses:
+        "200":
+          description: Ranked job matches
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/JobMatch"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: Resume profile not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [dashboard]
+      summary: Get candidate readiness and matching summary
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+components:
+  parameters:
+    Location:
+      name: location
+      in: query
+      schema:
+        type: string
+        maxLength: 100
+        default: Lahore
+    JobType:
+      name: jobType
+      in: query
+      schema:
+        type: string
+        enum: [Full-time, Part-time, Internship, Contract]
+    WorkMode:
+      name: workMode
+      in: query
+      schema:
+        type: string
+        enum: [On-site, Hybrid, Remote]
+  responses:
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+  schemas:
+    HealthStatus:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+    CandidateProfile:
+      type: object
+      required: [id, fullName, email, preferredLocation, country, createdAt, updatedAt]
+      properties:
+        id:
+          type: integer
+        fullName:
+          type: string
+        email:
+          type: string
+          format: email
+        preferredLocation:
+          type: string
+        country:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    CandidateProfileInput:
+      type: object
+      required: [fullName, email, preferredLocation, country]
+      properties:
+        fullName:
+          type: string
+          minLength: 2
+          maxLength: 100
+        email:
+          type: string
+          format: email
+          maxLength: 120
+        preferredLocation:
+          type: string
+          minLength: 2
+          maxLength: 100
+          default: Lahore
+        country:
+          type: string
+          pattern: "^[A-Za-z]{2}$"
+          default: PK
+    ResumeProfile:
+      type: object
+      required: [id, professionalSummary, skills, education, experience, updatedAt]
+      properties:
+        id:
+          type: integer
+        professionalSummary:
+          type: string
+        skills:
+          type: array
+          items:
+            type: string
+        education:
+          type: string
+        experience:
+          type: string
+        resumeFileName:
+          type: ["string", "null"]
+        extractedTextPreview:
+          type: ["string", "null"]
+        updatedAt:
+          type: string
+          format: date-time
+    ResumeProfileInput:
+      type: object
+      required: [professionalSummary, skills, education, experience]
+      properties:
+        professionalSummary:
+          type: string
+          maxLength: 5000
+        skills:
+          type: array
+          maxItems: 100
+          items:
+            type: string
+            minLength: 1
+            maxLength: 80
+        education:
+          type: string
+          maxLength: 5000
+        experience:
+          type: string
+          maxLength: 10000
+    ResumeUploadRequest:
+      type: object
+      required: [fileName, contentType, size]
+      properties:
+        fileName:
+          type: string
+          minLength: 1
+          maxLength: 255
+        contentType:
+          type: string
+          enum: [application/pdf, application/octet-stream]
+        size:
+          type: integer
+          minimum: 1
+          maximum: 5242880
+    ResumeUploadTarget:
+      type: object
+      required: [uploadUrl, objectPath]
+      properties:
+        uploadUrl:
+          type: string
+          format: uri
+        objectPath:
+          type: string
+    ResumeUploadCompleteInput:
+      type: object
+      required: [objectPath, fileName]
+      properties:
+        objectPath:
+          type: string
+          minLength: 1
+          maxLength: 1000
+        fileName:
+          type: string
+          minLength: 1
+          maxLength: 255
+    ResumeUploadResult:
+      type: object
+      required: [fileName, extractedTextPreview, resume]
+      properties:
+        fileName:
+          type: string
+        extractedTextPreview:
+          type: string
+        resume:
+          $ref: "#/components/schemas/ResumeProfile"
+    Job:
+      type: object
+      required: [id, title, company, description, location, jobType, workMode, requiredSkills, applyUrl, source]
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        company:
+          type: string
+        description:
+          type: string
+        location:
+          type: string
+        country:
+          type: ["string", "null"]
+        jobType:
+          type: string
+        workMode:
+          type: string
+        requiredSkills:
+          type: array
+          items:
+            type: string
+        applyUrl:
+          type: string
+          format: uri
+        source:
+          type: string
+        postedAt:
+          type: ["string", "null"]
+          format: date-time
+    LiveJobSearchResult:
+      type: object
+      required: [jobs, location, country, page]
+      properties:
+        jobs:
+          type: array
+          items:
+            $ref: "#/components/schemas/Job"
+        location:
+          type: string
+        country:
+          type: string
+        page:
+          type: integer
+    JobMatch:
+      allOf:
+        - $ref: "#/components/schemas/Job"
+        - type: object
+          required: [matchPercentage, matchedSkills, missingSkills]
+          properties:
+            matchPercentage:
+              type: number
+              minimum: 0
+              maximum: 100
+            matchedSkills:
+              type: array
+              items:
+                type: string
+            missingSkills:
+              type: array
+              items:
+                type: string
+    SkillCount:
+      type: object
+      required: [skill, jobs]
+      properties:
+        skill:
+          type: string
+        jobs:
+          type: integer
+    DashboardSummary:
+      type: object
+      required: [profileCompleteness, localJobs, matchedJobs, topSkills]
+      properties:
+        profileCompleteness:
+          type: integer
+          minimum: 0
+          maximum: 100
+        localJobs:
+          type: integer
+        matchedJobs:
+          type: integer
+        topSkills:
+          type: array
+          items:
+            $ref: "#/components/schemas/SkillCount"
