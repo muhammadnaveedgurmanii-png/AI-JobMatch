@@ -449,7 +449,7 @@ export const getRequestResumeUploadUrlUrl = () => {
 }
 
 /**
- * @summary Request a private upload URL for a PDF resume
+ * @summary Request a private upload target for a PDF resume
  */
 export const requestResumeUploadUrl = async (resumeUploadRequest: ResumeUploadRequest, options?: Parameters<typeof customFetch>[1]): Promise<ResumeUploadTarget> => {
 
@@ -498,7 +498,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type RequestResumeUploadUrlMutationError = ErrorType<BadRequestResponse | UnauthorizedResponse | ErrorResponse>
 
     /**
- * @summary Request a private upload URL for a PDF resume
+ * @summary Request a private upload target for a PDF resume
  */
 export const useRequestResumeUploadUrl = <TError = ErrorType<BadRequestResponse | UnauthorizedResponse | ErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestResumeUploadUrl>>, TError,{data: BodyType<ResumeUploadRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}

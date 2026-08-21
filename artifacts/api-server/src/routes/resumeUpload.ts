@@ -1,5 +1,8 @@
 import { Router, type IRouter, type Request } from "express";
+import { randomUUID } from "node:crypto";
 import { eq, and, sql } from "drizzle-orm";
+import { del, get, head } from "@vercel/blob";
+import { generateClientTokenFromReadWriteToken } from "@vercel/blob/client";
 import {
   db,
   candidateProfilesTable,
@@ -32,6 +35,24 @@ const UPLOAD_TTL_MS = 15 * 60 * 1000; // 15 minutes
 const MAX_PDF_PAGES = 50;
 const MAX_EXTRACTED_TEXT_CHARS = 200_000;
 const PDF_PARSE_TIMEOUT_MS = 10_000;
+
+function isVercelBlobConfigured(): boolean {
+  return Boolean(process.env.BLOB_READ_WRITE_TOKEN);
+}
+
+function isVercelBlobPath(objectPath: string): boolean {
+  return !objectPath.startsWith("/objects/");
+}
+
+async function deleteStoredResume(objectPath: string): Promise<void> {
+  if (isVercelBlobPath(objectPath)) {
+    await del(objectPath).catch(() => undefined);
+    return;
+  }
+
+  const file = await storage.getObjectEntityFile(objectPath);
+  await file.delete({ ignoreNotFound: true });
+}
 
 /** Resolve candidateId from clerkUserId */
 async function getCandidateId(clerkUserId: string): Promise<number | null> {
@@ -94,10 +115,26 @@ router.post(
       return;
     }
 
-    // Generate a random object path via App Storage
-    const uploadUrl = await storage.getObjectEntityUploadURL();
-    // normalizeObjectEntityPath converts GCS URL → /objects/... path
-    const objectPath = storage.normalizeObjectEntityPath(uploadUrl);
+    const useVercelBlob = isVercelBlobConfigured();
+    let objectPath: string;
+    let uploadUrl: string | undefined;
+    let clientToken: string | undefined;
+
+    if (useVercelBlob) {
+      objectPath = `resumes/${candidateId}/${randomUUID()}.pdf`;
+      clientToken = await generateClientTokenFromReadWriteToken({
+        pathname: objectPath,
+        maximumSizeInBytes: MAX_RESUME_BYTES,
+        allowedContentTypes: ["application/pdf"],
+        validUntil: Date.now() + UPLOAD_TTL_MS,
+        addRandomSuffix: false,
+        allowOverwrite: false,
+      });
+    } else {
+      uploadUrl = await storage.getObjectEntityUploadURL();
+      // normalizeObjectEntityPath converts GCS URL → /objects/... path
+      objectPath = storage.normalizeObjectEntityPath(uploadUrl);
+    }
 
     // Record pending upload (expires in 15 min)
     const expiresAt = new Date(Date.now() + UPLOAD_TTL_MS);
@@ -109,8 +146,10 @@ router.post(
     });
 
     const result = RequestResumeUploadUrlResponse.parse({
-      uploadUrl,
       objectPath,
+      uploadStrategy: useVercelBlob ? "vercel-blob" : "replit-gcs",
+      ...(uploadUrl ? { uploadUrl } : {}),
+      ...(clientToken ? { clientToken } : {}),
     });
 
     req.log.info({ candidateId }, "Resume upload URL issued");
@@ -166,8 +205,7 @@ router.post(
 
     if (pending.expiresAt <= now) {
       try {
-        const expiredFile = await storage.getObjectEntityFile(objectPath);
-        await expiredFile.delete({ ignoreNotFound: true });
+        await deleteStoredResume(objectPath);
       } catch {
         // The upload may never have completed; the pending row still expires.
       }
@@ -180,43 +218,54 @@ router.post(
       return;
     }
 
-    // Retrieve the object from GCS
+    // Retrieve the object from the active private storage provider.
+    let fileBytes: Buffer;
+    let objectSize: number;
+    let objectContentType: string;
     let objectFile;
     try {
-      objectFile = await storage.getObjectEntityFile(objectPath);
+      if (isVercelBlobPath(objectPath)) {
+        const blobMetadata = await head(objectPath);
+        objectSize = blobMetadata.size;
+        objectContentType = blobMetadata.contentType;
+        const blob = await get(objectPath, { access: "private", useCache: false });
+        if (!blob || blob.statusCode !== 200) {
+          throw new Error("BLOB_NOT_FOUND");
+        }
+        fileBytes = Buffer.from(await new Response(blob.stream).arrayBuffer());
+      } else {
+        objectFile = await storage.getObjectEntityFile(objectPath);
+        const [metadata] = await objectFile.getMetadata();
+        objectSize = Number(metadata.size ?? 0);
+        objectContentType = String(metadata.contentType ?? "");
+        const downloadResponse = await storage.downloadObject(objectFile, 0);
+        fileBytes = Buffer.from(await downloadResponse.arrayBuffer());
+      }
     } catch {
       res.status(400).json({ error: "Uploaded object not found in storage." });
       return;
     }
 
     // Verify object metadata: size and content type
-    const [metadata] = await objectFile.getMetadata();
-    const objSize = Number(metadata.size ?? 0);
-    if (objSize < MIN_RESUME_BYTES || objSize > MAX_RESUME_BYTES) {
-      await objectFile.delete({ ignoreNotFound: true });
+    if (objectSize < MIN_RESUME_BYTES || objectSize > MAX_RESUME_BYTES) {
+      await deleteStoredResume(objectPath);
       res.status(400).json({
-        error: `Object size ${objSize} bytes is outside the allowed 1–${MAX_RESUME_BYTES} byte range.`,
+        error: `Object size ${objectSize} bytes is outside the allowed 1–${MAX_RESUME_BYTES} byte range.`,
       });
       return;
     }
-    const objContentType = String(metadata.contentType ?? "");
     if (
-      objContentType !== "application/pdf" &&
-      objContentType !== "application/octet-stream"
+      objectContentType !== "application/pdf" &&
+      objectContentType !== "application/octet-stream"
     ) {
-      await objectFile.delete({ ignoreNotFound: true });
+      await deleteStoredResume(objectPath);
       res.status(400).json({ error: "Object content type must be application/pdf." });
       return;
     }
 
-    // Download and validate
-    const downloadResponse = await storage.downloadObject(objectFile, 0);
-    const arrayBuffer = await downloadResponse.arrayBuffer();
-    const fileBytes = Buffer.from(arrayBuffer);
-
     // Check %PDF signature
     if (!fileBytes.slice(0, 4).equals(Buffer.from("%PDF"))) {
-      await objectFile.delete({ ignoreNotFound: true });
+      await deleteStoredResume(objectPath);
       res.status(400).json({ error: "Uploaded file is not a valid PDF." });
       return;
     }
@@ -259,7 +308,7 @@ router.post(
       }
       extractedText = textParts.join("\n").trim();
     } catch (err) {
-      await objectFile.delete({ ignoreNotFound: true });
+      await deleteStoredResume(objectPath);
       const errorName = err instanceof Error ? err.message : "PDF_PARSE_ERROR";
       req.log.warn({ errorName }, "PDF parse rejected");
       res.status(400).json({ error: "Could not parse the PDF file." });
@@ -270,16 +319,19 @@ router.post(
     }
 
     if (!extractedText) {
-      await objectFile.delete({ ignoreNotFound: true });
+      await deleteStoredResume(objectPath);
       res.status(400).json({ error: "No readable text found in this PDF." });
       return;
     }
 
-    // Set private ACL — owner = Clerk user ID
-    await setObjectAclPolicy(objectFile, {
-      owner: clerkUserId,
-      visibility: "private",
-    });
+    // Vercel Blob enforces store-level privacy. Replit App Storage additionally
+    // stores the owner metadata used by its object access layer.
+    if (objectFile) {
+      await setObjectAclPolicy(objectFile, {
+        owner: clerkUserId,
+        visibility: "private",
+      });
+    }
 
     const extractedTextPreview = extractedText.slice(0, 500);
     const parsedResume = parseResumeText(extractedText);

@@ -5,8 +5,11 @@
  * Authenticated AI JobMatch API for Pakistan-based job seekers
  * OpenAPI spec version: 1.0.0
  */
+import type { ResumeUploadTargetUploadStrategy } from './resumeUploadTargetUploadStrategy';
 
 export interface ResumeUploadTarget {
-  uploadUrl: string;
+  uploadUrl?: string;
   objectPath: string;
+  uploadStrategy: ResumeUploadTargetUploadStrategy;
+  clientToken?: string;
 }

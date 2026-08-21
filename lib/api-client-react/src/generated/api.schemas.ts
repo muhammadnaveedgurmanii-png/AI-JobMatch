@@ -90,9 +90,19 @@ export interface ResumeUploadRequest {
   size: number;
 }
 
+export type ResumeUploadTargetUploadStrategy = typeof ResumeUploadTargetUploadStrategy[keyof typeof ResumeUploadTargetUploadStrategy];
+
+
+export const ResumeUploadTargetUploadStrategy = {
+  'replit-gcs': 'replit-gcs',
+  'vercel-blob': 'vercel-blob',
+} as const;
+
 export interface ResumeUploadTarget {
-  uploadUrl: string;
+  uploadUrl?: string;
   objectPath: string;
+  uploadStrategy: ResumeUploadTargetUploadStrategy;
+  clientToken?: string;
 }
 
 export interface ResumeUploadCompleteInput {

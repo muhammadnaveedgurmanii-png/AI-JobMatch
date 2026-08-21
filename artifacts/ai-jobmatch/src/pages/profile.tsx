@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useRef, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { put } from "@vercel/blob/client";
 import { Upload, FileText, CheckCircle2, UserCircle, FileCheck, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
@@ -227,14 +228,30 @@ function ResumeForm() {
         } 
       });
 
-      // 2. Upload directly to private object storage.
-      const uploadResponse = await fetch(target.uploadUrl, {
-        method: "PUT",
-        headers: { "Content-Type": "application/pdf" },
-        body: file
-      });
-      if (!uploadResponse.ok) {
-        throw new Error("The resume could not be uploaded to secure storage.");
+      // 2. Upload directly to the active private storage provider.
+      if (target.uploadStrategy === "vercel-blob") {
+        if (!target.clientToken) {
+          throw new Error("The secure upload token is unavailable. Please try again.");
+        }
+
+        await put(target.objectPath, file, {
+          access: "private",
+          token: target.clientToken,
+          contentType: "application/pdf",
+        });
+      } else {
+        if (!target.uploadUrl) {
+          throw new Error("The secure upload URL is unavailable. Please try again.");
+        }
+
+        const uploadResponse = await fetch(target.uploadUrl, {
+          method: "PUT",
+          headers: { "Content-Type": "application/pdf" },
+          body: file
+        });
+        if (!uploadResponse.ok) {
+          throw new Error("The resume could not be uploaded to secure storage.");
+        }
       }
 
       // 3. Complete and extract

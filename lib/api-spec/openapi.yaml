@@ -100,7 +100,7 @@ paths:
     post:
       operationId: requestResumeUploadUrl
       tags: [resumes]
-      summary: Request a private upload URL for a PDF resume
+      summary: Request a private upload target for a PDF resume
       requestBody:
         required: true
         content:
@@ -109,7 +109,7 @@ paths:
               $ref: "#/components/schemas/ResumeUploadRequest"
       responses:
         "200":
-          description: Signed upload URL
+          description: Private upload target
           content:
             application/json:
               schema:
@@ -402,12 +402,17 @@ components:
           maximum: 5242880
     ResumeUploadTarget:
       type: object
-      required: [uploadUrl, objectPath]
+      required: [objectPath, uploadStrategy]
       properties:
         uploadUrl:
           type: string
           format: uri
         objectPath:
+          type: string
+        uploadStrategy:
+          type: string
+          enum: [replit-gcs, vercel-blob]
+        clientToken:
           type: string
     ResumeUploadCompleteInput:
       type: object

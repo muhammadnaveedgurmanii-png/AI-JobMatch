@@ -25,6 +25,7 @@ export * from './resumeUploadRequest';
 export * from './resumeUploadRequestContentType';
 export * from './resumeUploadResult';
 export * from './resumeUploadTarget';
+export * from './resumeUploadTargetUploadStrategy';
 export * from './searchLiveJobsParams';
 export * from './skillCount';
 export * from './unauthorizedResponse';

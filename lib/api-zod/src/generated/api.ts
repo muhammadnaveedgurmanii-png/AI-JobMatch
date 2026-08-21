@@ -114,7 +114,7 @@ export const UpdateResumeResponse = zod.object({
 
 
 /**
- * @summary Request a private upload URL for a PDF resume
+ * @summary Request a private upload target for a PDF resume
  */
 export const requestResumeUploadUrlBodyFileNameMax = 255;
 
@@ -129,8 +129,10 @@ export const RequestResumeUploadUrlBody = zod.object({
 })
 
 export const RequestResumeUploadUrlResponse = zod.object({
-  "uploadUrl": zod.url(),
-  "objectPath": zod.string()
+  "uploadUrl": zod.url().optional(),
+  "objectPath": zod.string(),
+  "uploadStrategy": zod.enum(['replit-gcs', 'vercel-blob']),
+  "clientToken": zod.string().optional()
 })
 
 
