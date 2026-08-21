@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseResumeText } from "../resumeParser";
+import { parseResumeText } from "../resumeParser.js";
 
 describe("parseResumeText", () => {
   it("extracts common resume sections and deduplicates skills", () => {

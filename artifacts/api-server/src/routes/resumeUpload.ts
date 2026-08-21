@@ -15,10 +15,10 @@ import {
   CompleteResumeUploadBody,
   CompleteResumeUploadResponse,
 } from "@workspace/api-zod";
-import { requireAuth } from "../middlewares/requireAuth";
-import { ObjectStorageService } from "../lib/objectStorage";
-import { setObjectAclPolicy } from "../lib/objectAcl";
-import { parseResumeText } from "../lib/resumeParser";
+import { requireAuth } from "../middlewares/requireAuth.js";
+import { ObjectStorageService } from "../lib/objectStorage.js";
+import { setObjectAclPolicy } from "../lib/objectAcl.js";
+import { parseResumeText } from "../lib/resumeParser.js";
 
 type AuthedRequest = Request & { clerkUserId: string };
 type PdfLoadingTask = ReturnType<

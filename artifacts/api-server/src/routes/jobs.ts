@@ -7,8 +7,8 @@ import {
   SearchLiveJobsQueryParams,
   SearchLiveJobsResponse,
 } from "@workspace/api-zod";
-import { requireAuth } from "../middlewares/requireAuth";
-import { searchLiveJobs } from "../lib/jobSearch";
+import { requireAuth } from "../middlewares/requireAuth.js";
+import { searchLiveJobs } from "../lib/jobSearch.js";
 
 const router: IRouter = Router();
 

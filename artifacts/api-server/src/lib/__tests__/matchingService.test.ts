@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   normalizeSkillsToSet,
   calculateMatch,
-} from "../matchingService";
+} from "../matchingService.js";
 
 describe("normalizeSkillsToSet", () => {
   it("returns empty set for null", () => {

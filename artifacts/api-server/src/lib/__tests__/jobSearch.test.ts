@@ -7,7 +7,7 @@ import {
   normalizeJobType,
   extractRequiredSkills,
   normalizeJSearchJob,
-} from "../jobSearch";
+} from "../jobSearch.js";
 
 describe("buildJSearchQuery", () => {
   it("defaults to latest jobs + Lahore + Pakistan when no params", () => {

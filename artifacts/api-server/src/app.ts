@@ -1,14 +1,18 @@
 import express, { type ErrorRequestHandler, type Express } from "express";
-import pinoHttp from "pino-http";
+import { createRequire } from "node:module";
+import type { pinoHttp as PinoHttp } from "pino-http";
 import { clerkMiddleware } from "@clerk/express";
 import { publishableKeyFromHost } from "@clerk/shared/keys";
 import {
   CLERK_PROXY_PATH,
   clerkProxyMiddleware,
   getClerkProxyHost,
-} from "./middlewares/clerkProxyMiddleware";
-import router from "./routes";
-import { logger } from "./lib/logger";
+} from "./middlewares/clerkProxyMiddleware.js";
+import router from "./routes/index.js";
+import { logger } from "./lib/logger.js";
+
+const require = createRequire(import.meta.url);
+const pinoHttp: typeof PinoHttp = require("pino-http");
 
 const app: Express = express();
 

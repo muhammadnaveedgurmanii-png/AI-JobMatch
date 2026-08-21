@@ -7,8 +7,8 @@ import {
   localJobsTable,
 } from "@workspace/db";
 import { GetDashboardSummaryResponse } from "@workspace/api-zod";
-import { requireAuth } from "../middlewares/requireAuth";
-import { calculateMatch } from "../lib/matchingService";
+import { requireAuth } from "../middlewares/requireAuth.js";
+import { calculateMatch } from "../lib/matchingService.js";
 
 type AuthedRequest = Request & { clerkUserId: string };
 

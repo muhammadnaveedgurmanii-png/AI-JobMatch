@@ -6,7 +6,7 @@ import {
   UpdateResumeBody,
   UpdateResumeResponse,
 } from "@workspace/api-zod";
-import { requireAuth } from "../middlewares/requireAuth";
+import { requireAuth } from "../middlewares/requireAuth.js";
 
 type AuthedRequest = Request & { clerkUserId: string };
 
