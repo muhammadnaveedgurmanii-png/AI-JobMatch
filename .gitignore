@@ -7,7 +7,7 @@ env/
 .idea/
 .DS_Store
 Thumbs.db
-*.loggit add .
+*.log
 .env
 .env.*
 !.env.example
